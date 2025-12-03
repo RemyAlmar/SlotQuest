@@ -5,6 +5,7 @@ public class AdaptingGameArea : MonoBehaviour
     private Camera cam;
 
     [SerializeField, Min(0.1f)] private Vector2 gameArea = new(.5f, .5f);
+    [SerializeField, Min(0.1f)] private float speed = 5f;
     public int Width => UnityEngine.Device.Screen.width;
     public int Height => UnityEngine.Device.Screen.height;
     public float ScreenRatio => (float)Width / (float)Height;
@@ -16,29 +17,27 @@ public class AdaptingGameArea : MonoBehaviour
         UpdateRatio();
     }
 
-    void UpdateRatio()
+    private void UpdateRatio()
     {
         if (cam.orthographic)
             cam.orthographicSize = Mathf.Max(gameArea.x / (2 * ScreenRatio), gameArea.y * .5f);
         else
-        {
             FitPerspectiveCameraToArea();
-        }
     }
-    public void FitPerspectiveCameraToArea()
+    private void FitPerspectiveCameraToArea()
     {
-        float aspect = cam.aspect;
-        float fovV = cam.fieldOfView * Mathf.Deg2Rad;
+        float _aspect = cam.aspect;
+        float _verticalFOV = cam.fieldOfView * Mathf.Deg2Rad;
+        float _horizontalFOV = 2f * Mathf.Atan(Mathf.Tan(_verticalFOV * 0.5f) * _aspect);
 
-        float distHeight = (gameArea.y * 0.5f) / Mathf.Tan(fovV * 0.5f);
-        float fovH = 2f * Mathf.Atan(Mathf.Tan(fovV * 0.5f) * aspect);
-        float distWidth = (gameArea.x * 0.5f) / Mathf.Tan(fovH * 0.5f);
+        float _distHeight = (gameArea.y * 0.5f) / Mathf.Tan(_verticalFOV * 0.5f);
+        float _distWidth = (gameArea.x * 0.5f) / Mathf.Tan(_horizontalFOV * 0.5f);
 
-        float distance = Mathf.Max(distHeight, distWidth);
+        float _distance = Mathf.Max(_distHeight, _distWidth);
 
-        Vector3 pos = cam.transform.position;
-        pos.z = -distance;
-        cam.transform.position = pos;
+        Vector3 _pos = cam.transform.position;
+        _pos.z = -_distance;
+        cam.transform.position = Vector3.Lerp(cam.transform.position, _pos, speed * Time.deltaTime);
     }
 #if UNITY_EDITOR
     void OnDrawGizmos()
